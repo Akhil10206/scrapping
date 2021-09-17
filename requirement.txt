@@ -1,0 +1,7 @@
+pandas
+beautifulsoup4
+tabula-py
+requests
+sqlalchemy
+selenium
+mysqlclient
