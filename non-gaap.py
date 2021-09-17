@@ -111,19 +111,31 @@ def read_htmls(filepath, ticker):
     try:
         content = requests.get(filepath, headers=headers).content
         tables = BeautifulSoup(content, 'html.parser').find_all('table')
-        for table in tables:
+        flag = 0
+        for table in tables[0:4]:
             rows = BeautifulSoup(str(table), 'html.parser').find_all('tr')
             for row in rows:
                 text = BeautifulSoup(str(row), 'html.parser').find_all('td')
-                print(text.lower())
-                if "non-gaap" in text.lower():
-                    is_non_gaap = True
-        dfs = pd.read_html(filepath['href'])
+                lst = []
+                for i in text:
+                    lst.append(i.text.replace('\xa0', '').replace(
+                        ',', '').replace('\n', ''))
+                    if "non-gaap" in i:
+                        is_non_gaap = True
+                        flag = 1
+                        break
+                    if flag == 1:
+                        break
+                if flag == 1:
+                    break
+            if flag == 1:
+                break
     except Exception as e:
         print(e)
         print("couldn't find non-gaap keyword")
         is_non_gaap = False
     try:
+        dfs = pd.read_html(filepath['href'])
         for df in dfs:
             m = df.to_string().lower().replace(",", "")
             if "non-gaap" in m and revenue in m or "non-gaap" in m and opinc in m or is_non_gaap and revenue in m or is_non_gaap in m and opinc in m:
@@ -185,11 +197,11 @@ for ticker in tickers:
     print(df.values)
     revenue = str(int(df['revenue'][0])).strip("0")
     revenue = revenue.replace(" ", "")
-    opinc = str(int(df['opinc'][0])).strip("0")
+    opinc = str(int(abs(df['opinc'][0]))).strip("0")
     opinc = opinc.replace(" ", "")
-    netinc = str(int(df['netinc'][0])).strip("0")
+    netinc = str(int(abs(df['netinc'][0]))).strip("0")
     netinc = netinc.replace(" ", "")
-    gp = str(int(math.abs(df['gp'][0]))).strip("0")
+    gp = str(int(abs(df['gp'][0]))).strip("0")
     gp = gp.replace(" ", "")
     print(revenue)
     print(opinc)
